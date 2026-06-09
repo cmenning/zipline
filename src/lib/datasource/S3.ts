@@ -32,8 +32,8 @@ export class S3Datasource extends Datasource {
 
   constructor(
     public options: {
-      accessKeyId: string;
-      secretAccessKey: string;
+      accessKeyId?: string;
+      secretAccessKey?: string;
       region?: string;
       bucket: string;
       endpoint?: string | null;
@@ -44,10 +44,17 @@ export class S3Datasource extends Datasource {
     super();
 
     this.client = new S3Client({
-      credentials: {
-        accessKeyId: this.options.accessKeyId,
-        secretAccessKey: this.options.secretAccessKey,
-      },
+      // Only set explicit credentials when both are provided. When omitted, the
+      // AWS SDK falls back to its default provider chain (env, shared config,
+      // and EC2/ECS instance role via IMDS).
+      ...(this.options.accessKeyId && this.options.secretAccessKey
+        ? {
+            credentials: {
+              accessKeyId: this.options.accessKeyId,
+              secretAccessKey: this.options.secretAccessKey,
+            },
+          }
+        : {}),
       region: this.options.region ?? undefined,
       endpoint: this.options.endpoint ?? undefined,
       forcePathStyle: this.options.forcePathStyle ?? false,

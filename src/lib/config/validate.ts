@@ -159,8 +159,8 @@ export const schema = z.object({
       type: z.enum(['local', 's3']).default('local'),
       s3: z
         .object({
-          accessKeyId: z.string(),
-          secretAccessKey: z.string(),
+          accessKeyId: z.string().optional(),
+          secretAccessKey: z.string().optional(),
           region: z.string(),
           bucket: z.string(),
           endpoint: z.string().nullable().default(null),
@@ -180,7 +180,9 @@ export const schema = z.object({
     })
     .superRefine((s, c) => {
       if (s.type === 's3' && !s.s3) {
-        for (const key of ['accessKeyId', 'secretAccessKey', 'region', 'bucket']) {
+        // accessKeyId/secretAccessKey are optional: when omitted, the AWS SDK
+        // default provider chain (e.g. EC2 instance role) supplies credentials.
+        for (const key of ['region', 'bucket']) {
           c.addIssue({
             code: 'invalid_type',
             expected: 'string',
